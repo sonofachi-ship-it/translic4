@@ -9,12 +9,12 @@ export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [signInOpen, setSignInOpen] = useState(false);
   const [openAccountOpen, setOpenAccountOpen] = useState(false);
-  
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  
+
   const router = useRouter();
 
   const handleSignInSubmit = async (e: React.FormEvent) => {
@@ -105,7 +105,7 @@ export default function Header() {
               <span>Open Account</span>
               <span className="material-symbols-outlined text-lg">arrow_forward</span>
             </button>
-            
+
             {/* Mobile Menu Trigger */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -305,4 +305,4 @@ export default function Header() {
     </>
   );
 }
-
+// Production deployment trigger
