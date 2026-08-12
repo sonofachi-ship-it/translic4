@@ -123,4 +123,48 @@ export class AuthService {
       }
     }
   }
+
+  static async register(data: {
+    name: string;
+    email: string;
+    password: string;
+    password_confirmation: string;
+  }): Promise<{ success: boolean; message: string; errors?: Record<string, string[]> }> {
+    try {
+      const response = await fetch(`${API_URL}/register`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+
+      const resData = await response.json();
+
+      if (response.ok && resData.success) {
+        this.setToken(resData.token);
+        return { success: true, message: resData.message || "Registration successful." };
+      }
+
+      if (response.status === 422 && resData.errors) {
+        return {
+          success: false,
+          message: resData.message || "Validation failed.",
+          errors: resData.errors,
+        };
+      }
+
+      return {
+        success: false,
+        message: resData.message || "Registration failed.",
+      };
+    } catch (error) {
+      console.error("Registration request failed:", error);
+      return {
+        success: false,
+        message: "Network error. Please make sure the backend server is running.",
+      };
+    }
+  }
 }

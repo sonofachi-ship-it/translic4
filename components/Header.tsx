@@ -15,6 +15,16 @@ export default function Header() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  // Registration Form States
+  const [regFirstName, setRegFirstName] = useState("");
+  const [regLastName, setRegLastName] = useState("");
+  const [regEmail, setRegEmail] = useState("");
+  const [regPassword, setRegPassword] = useState("");
+  const [regPasswordConfirmation, setRegPasswordConfirmation] = useState("");
+  const [regError, setRegError] = useState<string | null>(null);
+  const [regValidationErrors, setRegValidationErrors] = useState<Record<string, string[]>>({});
+  const [regLoading, setRegLoading] = useState(false);
+
   const router = useRouter();
 
   const handleSignInSubmit = async (e: React.FormEvent) => {
@@ -39,10 +49,43 @@ export default function Header() {
     }
   };
 
-  const handleOpenAccountSubmit = (e: React.FormEvent) => {
+  const handleOpenAccountSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setOpenAccountOpen(false);
-    router.push("/dashboard");
+    setRegError(null);
+    setRegValidationErrors({});
+    setRegLoading(true);
+
+    const fullName = `${regFirstName} ${regLastName}`.trim();
+
+    try {
+      const res = await AuthService.register({
+        name: fullName,
+        email: regEmail,
+        password: regPassword,
+        password_confirmation: regPasswordConfirmation,
+      });
+
+      if (res.success) {
+        setOpenAccountOpen(false);
+        // Clear registration states
+        setRegFirstName("");
+        setRegLastName("");
+        setRegEmail("");
+        setRegPassword("");
+        setRegPasswordConfirmation("");
+        router.push("/dashboard");
+      } else {
+        if (res.errors) {
+          setRegValidationErrors(res.errors);
+        } else {
+          setRegError(res.message);
+        }
+      }
+    } catch (err) {
+      setRegError("An unexpected error occurred during registration. Please try again.");
+    } finally {
+      setRegLoading(false);
+    }
   };
 
   return (
@@ -241,7 +284,8 @@ export default function Header() {
           <div className="bg-[#ffffff] rounded-2xl max-w-md w-full p-6 shadow-2xl border border-[#c3c5d9]/30 relative">
             <button
               onClick={() => setOpenAccountOpen(false)}
-              className="absolute top-4 right-4 text-[#737688] hover:text-[#131b2e] p-1 rounded-full hover:bg-[#eaedff]"
+              disabled={regLoading}
+              className="absolute top-4 right-4 text-[#737688] hover:text-[#131b2e] p-1 rounded-full hover:bg-[#eaedff] disabled:opacity-50"
             >
               <span className="material-symbols-outlined">close</span>
             </button>
@@ -255,14 +299,23 @@ export default function Header() {
               </div>
             </div>
             <form onSubmit={handleOpenAccountSubmit} className="space-y-4">
+              {regError && (
+                <div className="p-3 bg-[#ffdad6] text-[#93000a] rounded-xl text-xs font-semibold border border-[#ba1a1a]/20 animate-in fade-in duration-200">
+                  {regError}
+                </div>
+              )}
+              
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-[#434656] mb-1">First Name</label>
                   <input
                     type="text"
                     required
-                    defaultValue="Alex"
-                    className="w-full px-4 py-2.5 rounded-xl border border-[#c3c5d9] focus:outline-[#0052ff] text-sm text-[#131b2e]"
+                    value={regFirstName}
+                    onChange={(e) => setRegFirstName(e.target.value)}
+                    disabled={regLoading}
+                    placeholder="Alex"
+                    className="w-full px-4 py-2.5 rounded-xl border border-[#c3c5d9] focus:outline-[#0052ff] text-sm text-[#131b2e] disabled:opacity-50"
                   />
                 </div>
                 <div>
@@ -270,33 +323,75 @@ export default function Header() {
                   <input
                     type="text"
                     required
-                    defaultValue="Morgan"
-                    className="w-full px-4 py-2.5 rounded-xl border border-[#c3c5d9] focus:outline-[#0052ff] text-sm text-[#131b2e]"
+                    value={regLastName}
+                    onChange={(e) => setRegLastName(e.target.value)}
+                    disabled={regLoading}
+                    placeholder="Morgan"
+                    className="w-full px-4 py-2.5 rounded-xl border border-[#c3c5d9] focus:outline-[#0052ff] text-sm text-[#131b2e] disabled:opacity-50"
                   />
                 </div>
               </div>
+              {regValidationErrors.name && (
+                <p className="text-[11px] text-[#ba1a1a] font-semibold -mt-2 animate-in fade-in">
+                  {regValidationErrors.name[0]}
+                </p>
+              )}
+
               <div>
-                <label className="block text-xs font-semibold text-[#434656] mb-1">Work Email</label>
+                <label className="block text-xs font-semibold text-[#434656] mb-1">Email</label>
                 <input
                   type="email"
                   required
-                  defaultValue="alex.m@company.com"
-                  className="w-full px-4 py-2.5 rounded-xl border border-[#c3c5d9] focus:outline-[#0052ff] text-sm text-[#131b2e]"
+                  value={regEmail}
+                  onChange={(e) => setRegEmail(e.target.value)}
+                  disabled={regLoading}
+                  placeholder="alex.m@company.com"
+                  className="w-full px-4 py-2.5 rounded-xl border border-[#c3c5d9] focus:outline-[#0052ff] text-sm text-[#131b2e] disabled:opacity-50"
+                />
+                {regValidationErrors.email && (
+                  <p className="text-[11px] text-[#ba1a1a] font-semibold mt-1 animate-in fade-in">
+                    {regValidationErrors.email[0]}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-[#434656] mb-1">Password</label>
+                <input
+                  type="password"
+                  required
+                  value={regPassword}
+                  onChange={(e) => setRegPassword(e.target.value)}
+                  disabled={regLoading}
+                  placeholder="••••••••"
+                  className="w-full px-4 py-2.5 rounded-xl border border-[#c3c5d9] focus:outline-[#0052ff] text-sm text-[#131b2e] disabled:opacity-50"
+                />
+                {regValidationErrors.password && (
+                  <p className="text-[11px] text-[#ba1a1a] font-semibold mt-1 animate-in fade-in">
+                    {regValidationErrors.password[0]}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-[#434656] mb-1">Confirm Password</label>
+                <input
+                  type="password"
+                  required
+                  value={regPasswordConfirmation}
+                  onChange={(e) => setRegPasswordConfirmation(e.target.value)}
+                  disabled={regLoading}
+                  placeholder="••••••••"
+                  className="w-full px-4 py-2.5 rounded-xl border border-[#c3c5d9] focus:outline-[#0052ff] text-sm text-[#131b2e] disabled:opacity-50"
                 />
               </div>
-              <div>
-                <label className="block text-xs font-semibold text-[#434656] mb-1">Account Type</label>
-                <select className="w-full px-4 py-2.5 rounded-xl border border-[#c3c5d9] focus:outline-[#0052ff] text-sm text-[#131b2e]">
-                  <option>Personal Apex Account</option>
-                  <option>Business Enterprise Account</option>
-                  <option>Private Wealth Banking</option>
-                </select>
-              </div>
+
               <button
                 type="submit"
-                className="w-full py-3.5 bg-[#0052ff] hover:bg-[#003ec7] text-white font-semibold rounded-xl text-sm shadow-md transition-all mt-2 cursor-pointer"
+                disabled={regLoading}
+                className="w-full py-3.5 bg-[#0052ff] hover:bg-[#003ec7] text-white font-semibold rounded-xl text-sm shadow-md transition-all mt-2 cursor-pointer disabled:opacity-70 flex items-center justify-center gap-2"
               >
-                Instant Onboarding →
+                {regLoading ? "Registering Account..." : "Instant Onboarding →"}
               </button>
             </form>
           </div>
